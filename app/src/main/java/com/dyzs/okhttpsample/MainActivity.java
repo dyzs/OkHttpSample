@@ -7,6 +7,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import butterknife.BindView;
+import butterknife.BindViews;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
@@ -16,6 +17,10 @@ public class MainActivity extends AppCompatActivity {
     public ImageView background_image;
     @BindView(R.id.hello_world)
     public TextView hello_world;
+
+    @BindViews({R.id.tv_1st, R.id.tv_2nd, R.id.tv_3rd})
+    public TextView tv_1st, tv_2nd, tv_3rd;
+
     @OnClick(R.id.background_image)
     public void showImageClick() {
         Toast.makeText(MainActivity.this, "image background", Toast.LENGTH_LONG).show();
@@ -30,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         hello_world.setText("Hi! Nick!!  Bye ! Nick");
+
 
 
 
