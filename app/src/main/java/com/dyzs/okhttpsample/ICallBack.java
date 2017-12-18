@@ -6,4 +6,5 @@ package com.dyzs.okhttpsample;
 
 public interface ICallBack {
     void onFailure(Object... objects);
+    void onSuccess(Object... objects);
 }
