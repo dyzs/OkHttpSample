@@ -18,6 +18,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
+import okio.BufferedSink;
 
 /**
  * Created by maidou on 2017/12/14.
@@ -41,6 +43,7 @@ public class OkHttpHelper {
     public static final MediaType DIGEST = MediaType.parse("multipart/digest");
     public static final MediaType PARALLEL = MediaType.parse("multipart/parallel");
     public static final MediaType FORM = MediaType.parse("multipart/form-data");
+    public static final MediaType MEDIA_TYPE_MARKDOWN = MediaType.parse("text/x-markdown; charset=utf-8");
 
 
 
@@ -206,6 +209,144 @@ public class OkHttpHelper {
             e.printStackTrace();
         }
     }
+
+
+    public void testIncludeHeader() {
+        Request request = new Request.Builder()
+                .url("https://api.github.com/repos/square/okhttp/issues")
+                .header("User-Agent", "OkHttp Headers.java")
+                .addHeader("Accept", "application/json; q=0.5")
+                .addHeader("Accept", "application/vnd.github.v3+json")
+                .build();
+        Call call = mOkHttpClient.newCall(request);
+        try {
+            call.enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+
+                }
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+                    System.out.println("Server: " + response.header("Server"));
+                    System.out.println("Date: " + response.header("Date"));
+                    System.out.println("Vary: " + response.headers("Vary"));
+                }
+            });
+        } catch (Exception e) {
+
+        }
+    }
+
+
+    /**
+     * 基于 post 的方式提交 string
+     */
+    public void postMarkDown(){
+        String postBody = ""
+                + "Releases\n"
+                + "--------\n"
+                + "\n"
+                + " * _1.0_ May 6, 2013\n"
+                + " * _1.1_ June 15, 2013\n"
+                + " * _1.2_ August 11, 2013\n";
+
+        Request request = new Request.Builder()
+                .url("https://api.github.com/markdown/raw")
+                .post(RequestBody.create(MEDIA_TYPE_MARKDOWN, postBody))
+                .build();
+
+        Call call = mOkHttpClient.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+
+                System.out.println(response.body().string());
+            }
+        });
+    }
+
+
+    /**
+     * 以流的方式POST提交请求体。请求体的内容由流写入产生。这个例子是流直接写入Okio的BufferedSink。
+     * 你的程序可能会使用OutputStream，你可以使用BufferedSink.outputStream()来获取。
+     */
+    public void postOutPutStream() {
+        RequestBody requestBody = new RequestBody() {
+            @Override
+            public MediaType contentType() {
+                return MEDIA_TYPE_MARKDOWN;
+            }
+
+            @Override
+            public void writeTo(BufferedSink sink) throws IOException {
+                sink.writeUtf8("Numbers\n");
+                sink.writeUtf8("-------\n");
+                for (int i = 2; i <= 997; i++) {
+                    sink.writeUtf8(String.format(" * %s = %s\n", i, factor(i)));
+                }
+            }
+            private String factor(int n) {
+                for (int i = 2; i < n; i++) {
+                    int x = n / i;
+                    if (x * i == n) return factor(x) + " × " + i;
+                }
+                return Integer.toString(n);
+            }
+        };
+
+        Request request = new Request.Builder()
+                .url("https://api.github.com/markdown/raw")
+                .post(requestBody)
+                .build();
+        Call call = mOkHttpClient.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+                System.out.println(response.body().string());
+            }
+        });
+    }
+
+
+    /**
+     * 基于 Post方式提交文件  以文件作为请求体是十分简单的
+     */
+    public void postMarkDownFile() {
+        File file = new File("README.md");
+        RequestBody requestBody = RequestBody.create(MEDIA_TYPE_MARKDOWN, file);
+        Request request = new Request.Builder()
+                .url("https://api.github.com/markdown/raw")
+                .post(requestBody)
+                .build();
+        Call call = mOkHttpClient.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+                System.out.println(response.body().string());
+            }
+        });
+    }
+
+
 
 
     /**
